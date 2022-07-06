@@ -37,7 +37,7 @@ import com.netflix.eureka.EurekaServerConfig;
  */
 @Configuration
 public class EurekaServerInitializerConfiguration
-		implements ServletContextAware, SmartLifecycle, Ordered {
+		implements ServletContextAware, SmartLifecycle, Ordered {// 实现SmartLifecycle接口，可以在Spring容器的Bean创建完成后做一些事情
 
 	private static final Log log = LogFactory.getLog(EurekaServerInitializerConfiguration.class);
 
@@ -61,19 +61,26 @@ public class EurekaServerInitializerConfiguration
 		this.servletContext = servletContext;
 	}
 
+	/**
+	 * 重写start方法，定义自己的操作
+	 */
 	@Override
 	public void start() {
+		// 新建一个线程
 		new Thread(new Runnable() {
 			@Override
 			public void run() {
 				try {
 					//TODO: is this class even needed now?
+
+					// EurekaServerAutoConfiguration注入了EurekaServerBootstrap
+					// 核心方法，初始化EurekaServerContext的细节
 					eurekaServerBootstrap.contextInitialized(EurekaServerInitializerConfiguration.this.servletContext);
 					log.info("Started Eureka Server");
 
-					publish(new EurekaRegistryAvailableEvent(getEurekaServerConfig()));
-					EurekaServerInitializerConfiguration.this.running = true;
-					publish(new EurekaServerStartedEvent(getEurekaServerConfig()));
+					publish(new EurekaRegistryAvailableEvent(getEurekaServerConfig()));// 发布事件
+					EurekaServerInitializerConfiguration.this.running = true;// 状态属性设置
+					publish(new EurekaServerStartedEvent(getEurekaServerConfig()));// 发布事件
 				}
 				catch (Exception ex) {
 					// Help!

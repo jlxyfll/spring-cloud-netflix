@@ -79,7 +79,9 @@ public class EurekaServerBootstrap {
 
 	public void contextInitialized(ServletContext context) {
 		try {
+			// 初始化环境信息
 			initEurekaEnvironment();
+			// 初始化context细节
 			initEurekaServerContext();
 
 			context.setAttribute(EurekaServerContext.class.getName(), this.serverContext);
@@ -136,6 +138,7 @@ public class EurekaServerBootstrap {
 
 	protected void initEurekaServerContext() throws Exception {
 		// For backward compatibility
+		// 注册转换器
 		JsonXStream.getInstance().registerConverter(new V1AwareInstanceInfoConverter(),
 				XStream.PRIORITY_VERY_HIGH);
 		XmlXStream.getInstance().registerConverter(new V1AwareInstanceInfoConverter(),
@@ -146,17 +149,20 @@ public class EurekaServerBootstrap {
 					this.eurekaClientConfig, this.registry, this.applicationInfoManager);
 			this.awsBinder.start();
 		}
-
+		// 服务器上下文的静态持有者，用于非 DI 情况。
+		// 为非ioc容器提供获取serverContext对象的接口
 		EurekaServerContextHolder.initialize(this.serverContext);
 
 		log.info("Initialized server context");
 
 		// Copy registry from neighboring eureka node
-		int registryCount = this.registry.syncUp();
-		this.registry.openForTraffic(this.applicationInfoManager, registryCount);
+		// 某一个Server实例启动的时候，从集群中其他的Server拷贝注册信息过来
+		// 每一个Server对于其他Server来说也是客户端
+		int registryCount = this.registry.syncUp();// 从对等 eureka 节点填充注册表信息。如果通信失败，此操作将故障转移到其他节点，直到列表耗尽
+		this.registry.openForTraffic(this.applicationInfoManager, registryCount);// 更改实例状态为up对外提供服务
 
 		// Register all monitoring statistics.
-		EurekaMonitors.registerAllStats();
+		EurekaMonitors.registerAllStats();// 注册统计器
 	}
 
 	/**

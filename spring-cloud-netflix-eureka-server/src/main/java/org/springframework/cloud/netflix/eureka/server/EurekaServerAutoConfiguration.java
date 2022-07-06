@@ -72,8 +72,10 @@ import com.sun.jersey.spi.container.servlet.ServletContainer;
  * @author Fahim Farook
  */
 @Configuration
-@Import(EurekaServerInitializerConfiguration.class)
-@ConditionalOnBean(EurekaServerMarkerConfiguration.Marker.class)
+@Import(EurekaServerInitializerConfiguration.class)// 3.导入了EurekaServerInitializerConfiguration配置类
+// 前提条件，装载EurekaServerAutoConfiguration之前需要提前装载EurekaServerMarkerConfiguration.Marker
+// 这个类是通过@EnableEurekaServer导入了EurekaServerMarkerConfiguration这个类，其中新建了Marker
+@ConditionalOnBean(EurekaServerMarkerConfiguration.Marker.class)// 1.要装配该类必须有一个前提容器中需要有marker这个bean
 @EnableConfigurationProperties({ EurekaDashboardProperties.class,
 		InstanceRegistryProperties.class })
 @PropertySource("classpath:/eureka/server.properties")
@@ -121,8 +123,13 @@ public class EurekaServerAutoConfiguration extends WebMvcConfigurerAdapter {
 		}
 	}
 
+	/**
+	 * 注入一个对外的接口（仪表盘-后台界面）
+	 * 可以在配置文件中关闭
+	 * @return
+	 */
 	@Bean
-	@ConditionalOnProperty(prefix = "eureka.dashboard", name = "enabled", matchIfMissing = true)
+	@ConditionalOnProperty(prefix = "eureka.dashboard", name = "enabled", matchIfMissing = true)// 默认是true
 	public EurekaController eurekaController() {
 		return new EurekaController(this.applicationInfoManager);
 	}
@@ -158,6 +165,13 @@ public class EurekaServerAutoConfiguration extends WebMvcConfigurerAdapter {
 		}
 	}
 
+	/**
+	 * 对等节点感知实例注册器
+	 * （集群模式下注册服务使用到的注册器）
+	 * EurekaServer集群中各个节点是对等的，没有主从之分
+	 * @param serverCodecs
+	 * @return
+	 */
 	@Bean
 	public PeerAwareInstanceRegistry peerAwareInstanceRegistry(
 			ServerCodecs serverCodecs) {
@@ -168,6 +182,12 @@ public class EurekaServerAutoConfiguration extends WebMvcConfigurerAdapter {
 				this.instanceRegistryProperties.getDefaultOpenForTrafficCount());
 	}
 
+	/**
+	 * 注入了PeerEurekaNodes，辅助封装对等节点相关的信息和操作，比如更新集群当中的对等
+	 * @param registry
+	 * @param serverCodecs
+	 * @return
+	 */
 	@Bean
 	@ConditionalOnMissingBean
 	public PeerEurekaNodes peerEurekaNodes(PeerAwareInstanceRegistry registry,
@@ -235,13 +255,31 @@ public class EurekaServerAutoConfiguration extends WebMvcConfigurerAdapter {
 		}
 	}
 
+	/**
+	 * 注入EurekaServer上下文，
+	 * DefaultEurekaServerContext
+	 * @param serverCodecs
+	 * @param registry
+	 * @param peerEurekaNodes
+	 * @return
+	 */
 	@Bean
 	public EurekaServerContext eurekaServerContext(ServerCodecs serverCodecs,
 			PeerAwareInstanceRegistry registry, PeerEurekaNodes peerEurekaNodes) {
+		// DefaultEurekaServerContext对象构建完毕之后，会执行initialize方法
+		// 会执行peerEurekaNodes.start();方法
+		// 构建线程池 Executors.newSingleThreadScheduledExecutor
 		return new DefaultEurekaServerContext(this.eurekaServerConfig, serverCodecs,
 				registry, peerEurekaNodes, this.applicationInfoManager);
 	}
 
+	/**
+	 * 启动引导类
+	 * 注入EurekaServerBootStrap类，后续启动需要使用该类
+	 * @param registry
+	 * @param serverContext
+	 * @return
+	 */
 	@Bean
 	public EurekaServerBootstrap eurekaServerBootstrap(PeerAwareInstanceRegistry registry,
 			EurekaServerContext serverContext) {
@@ -252,6 +290,7 @@ public class EurekaServerAutoConfiguration extends WebMvcConfigurerAdapter {
 
 	/**
 	 * Register the Jersey filter
+	 * Jersey是一个rest框架帮我们发布restful服务接口的（类似于springmvc）
 	 */
 	@Bean
 	public FilterRegistrationBean jerseyFilterRegistration(

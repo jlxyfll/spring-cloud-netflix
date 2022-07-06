@@ -35,7 +35,9 @@ import org.springframework.context.annotation.Import;
 @Target(ElementType.TYPE)
 @Retention(RetentionPolicy.RUNTIME)
 @Documented
-@Import(EurekaServerMarkerConfiguration.class)
+// 引入其他的@Configuration
+// 加载这个类定义到context中
+@Import(EurekaServerMarkerConfiguration.class)// 导入 EurekaServerMarkerConfiguration 配置类
 public @interface EnableEurekaServer {
 
 }

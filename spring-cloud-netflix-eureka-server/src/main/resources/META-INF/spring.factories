@@ -1,2 +1,3 @@
 org.springframework.boot.autoconfigure.EnableAutoConfiguration=\
   org.springframework.cloud.netflix.eureka.server.EurekaServerAutoConfiguration
+# SpringBoot???????eureka??EurekaServerAutoConfiguration
