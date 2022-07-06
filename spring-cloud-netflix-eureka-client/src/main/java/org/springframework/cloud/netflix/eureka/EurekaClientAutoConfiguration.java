@@ -86,10 +86,12 @@ import static org.springframework.cloud.commons.util.IdUtils.getDefaultInstanceI
 @EnableConfigurationProperties
 @ConditionalOnClass(EurekaClientConfig.class)
 @Import(DiscoveryClientOptionalArgsConfiguration.class)
+// 容器中必须有Marker
 @ConditionalOnBean(EurekaDiscoveryClientConfiguration.Marker.class)
 @ConditionalOnProperty(value = "eureka.client.enabled", matchIfMissing = true)
 @AutoConfigureBefore({ NoopDiscoveryClientAutoConfiguration.class,
 		CommonsClientAutoConfiguration.class, ServiceRegistryAutoConfiguration.class })
+// 自动装配过程中，必须把后面的类都装配了，才装配当前类
 @AutoConfigureAfter(name = {"org.springframework.cloud.autoconfigure.RefreshAutoConfiguration",
 		"org.springframework.cloud.netflix.eureka.EurekaDiscoveryClientConfiguration",
 		"org.springframework.cloud.client.serviceregistry.AutoServiceRegistrationAutoConfiguration"})
@@ -127,7 +129,7 @@ public class EurekaClientAutoConfiguration {
 	private String getProperty(String property) {
 		return this.env.containsProperty(property) ? this.env.getProperty(property) : "";
 	}
-
+	// 读取封装配置信息注入容器
 	@Bean
 	@ConditionalOnMissingBean(value = EurekaInstanceConfig.class, search = SearchStrategy.CURRENT)
 	public EurekaInstanceConfigBean eurekaInstanceConfigBean(InetUtils inetUtils,
@@ -243,7 +245,8 @@ public class EurekaClientAutoConfiguration {
 		@Autowired
 		private AbstractDiscoveryClientOptionalArgs<?> optionalArgs;
 
-		@Bean(destroyMethod = "shutdown")
+		// 实例化EurekaClient对象，返回CloudEurekaClient
+		@Bean(destroyMethod = "shutdown")// 服务下架入口，当客户端工程关闭容器销毁的时候，会调用shutdown方法执行一些清理操作，下线操作
 		@ConditionalOnMissingBean(value = EurekaClient.class, search = SearchStrategy.CURRENT)
 		public EurekaClient eurekaClient(ApplicationInfoManager manager, EurekaClientConfig config) {
 			return new CloudEurekaClient(manager, config, this.optionalArgs,

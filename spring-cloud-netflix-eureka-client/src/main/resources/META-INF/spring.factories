@@ -7,4 +7,4 @@ org.springframework.cloud.netflix.eureka.EurekaDiscoveryClientConfiguration
 
 org.springframework.cloud.bootstrap.BootstrapConfiguration=\
 org.springframework.cloud.netflix.eureka.config.EurekaDiscoveryClientConfigServiceBootstrapConfiguration
-
+# ???SpringBoot???????EurekaClientAutoConfiguration

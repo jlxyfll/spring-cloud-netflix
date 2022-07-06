@@ -60,6 +60,7 @@ public class CloudEurekaClient extends DiscoveryClient {
 							 EurekaClientConfig config,
 							 AbstractDiscoveryClientOptionalArgs<?> args,
 							 ApplicationEventPublisher publisher) {
+		// 构造函数中调用父类
 		super(applicationInfoManager, config, args);
 		this.applicationInfoManager = applicationInfoManager;
 		this.publisher = publisher;
