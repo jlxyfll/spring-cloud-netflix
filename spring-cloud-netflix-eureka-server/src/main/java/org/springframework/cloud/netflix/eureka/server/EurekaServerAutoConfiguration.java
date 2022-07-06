@@ -80,8 +80,10 @@ import com.sun.jersey.spi.container.servlet.ServletContainer;
 		InstanceRegistryProperties.class })
 @PropertySource("classpath:/eureka/server.properties")
 public class EurekaServerAutoConfiguration extends WebMvcConfigurerAdapter {
+
 	/**
 	 * List of packages containing Jersey resources required by the Eureka server
+	 * Jersey要扫描的包，在springmvc中controller，Jersey中对外提供接口的类叫做资源
 	 */
 	private static final String[] EUREKA_PACKAGES = new String[] { "com.netflix.discovery",
 			"com.netflix.eureka" };
@@ -307,6 +309,7 @@ public class EurekaServerAutoConfiguration extends WebMvcConfigurerAdapter {
 	/**
 	 * Construct a Jersey {@link javax.ws.rs.core.Application} with all the resources
 	 * required by the Eureka server.
+	 * <p>Jersey细节配置
 	 */
 	@Bean
 	public javax.ws.rs.core.Application jerseyApplication(Environment environment,
@@ -316,12 +319,12 @@ public class EurekaServerAutoConfiguration extends WebMvcConfigurerAdapter {
 				false, environment);
 
 		// Filter to include only classes that have a particular annotation.
-		//
+		// 配置Jersey注解，Path->类似于springmvc中的@RequestMapping注解
 		provider.addIncludeFilter(new AnnotationTypeFilter(Path.class));
 		provider.addIncludeFilter(new AnnotationTypeFilter(Provider.class));
 
 		// Find classes in Eureka packages (or subpackages)
-		//
+		//扫描注解---> 指定要扫描的包，会扫描包及其子包，做的事情类似于spring companent-scan
 		Set<Class<?>> classes = new HashSet<>();
 		for (String basePackage : EUREKA_PACKAGES) {
 			Set<BeanDefinition> beans = provider.findCandidateComponents(basePackage);
